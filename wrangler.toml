@@ -1,0 +1,15 @@
+name = "tiffany-festa-api"
+main = "worker/index.ts"
+compatibility_date = "2026-08-14"
+
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "tiffany-fotos"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tiffany-festa"
+database_id = "e6483376-fb85-41a0-9163-d229b05c0a26"
+
+[vars]
+ALLOWED_ORIGIN = "https://festaxvtiffany.vercel.app"
