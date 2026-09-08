@@ -283,6 +283,7 @@ const C = {
 export default function App() {
   const savedGuestName = localStorage.getItem("tiffany-guest-name") || "";
   const [screen, setScreen] = useState<Screen>(savedGuestName ? "home" : "welcome");
+  const [adminReturnScreen, setAdminReturnScreen] = useState<"welcome" | "home">("welcome");
   const [activeTab, setActiveTab] = useState<Tab>("home");
   const [guestName, setGuestName] = useState(savedGuestName);
   const [nameInput, setNameInput] = useState(savedGuestName);
@@ -312,8 +313,13 @@ export default function App() {
 
   const handleFileChange = (e: Event) => {
     const input = e.target as HTMLInputElement;
-    const files = Array.from(input.files || []).slice(0, 10);
+    const files = Array.from(input.files || []);
     if (!files.length) return;
+    if (files.length > 10) {
+      setAppError(`Você selecionou ${files.length} fotos. Escolha no máximo 10 por vez.`);
+      input.value = "";
+      return;
+    }
     if (files.some((file) => !file.type.startsWith("image/"))) { setAppError("Selecione somente arquivos de imagem."); return; }
     previewUrls.forEach((url) => URL.revokeObjectURL(url));
     const urls = files.map((file) => URL.createObjectURL(file));
@@ -430,7 +436,7 @@ export default function App() {
   }, [screen, slideshowIndex, slideshowPlaying, photos.length]);
 
   if (screen === "admin") {
-    return <AdminArea photos={photos} onBack={() => setScreen("home")} onDeleted={(id) => setPhotos((current) => current.map((post) => ({ ...post, images: (post.images || [{ id: post.id, url: post.url }]).filter((image) => image.id !== id) })).filter((post) => post.images?.length))} onFeed={() => { setGuestName("Tiffany"); setNameInput("Tiffany"); localStorage.setItem("tiffany-guest-name", "Tiffany"); setScreen("home"); }} onPublish={() => { setGuestName("Tiffany"); localStorage.setItem("tiffany-guest-name", "Tiffany"); openAddPhoto(); }} />;
+    return <AdminArea photos={photos} onBack={() => setScreen(adminReturnScreen)} onDeleted={(id) => setPhotos((current) => current.map((post) => ({ ...post, images: (post.images || [{ id: post.id, url: post.url }]).filter((image) => image.id !== id) })).filter((post) => post.images?.length))} onFeed={() => { setGuestName("Tiffany"); setNameInput("Tiffany"); localStorage.setItem("tiffany-guest-name", "Tiffany"); setScreen("home"); }} onPublish={() => { setGuestName("Tiffany"); localStorage.setItem("tiffany-guest-name", "Tiffany"); openAddPhoto(); }} />;
   }
 
   // ─── WELCOME ───────────────────────────────────────────────────────────────
@@ -577,7 +583,7 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setScreen("admin")}
+            onClick={() => { setAdminReturnScreen("welcome"); setScreen("admin"); }}
             style={{ marginTop: 18, padding: 8, color: "#58709d", background: "none", border: 0, fontSize: 12, cursor: "pointer" }}
           >
             Área da Tiffany
@@ -779,7 +785,7 @@ export default function App() {
               Olá, {guestName || "Convidado"}!
             </h2>
           </div>
-          <button onClick={() => setScreen("admin")} style={{ marginLeft: "auto", marginRight: 8, padding: "8px 10px", borderRadius: 11, border: `1px solid ${C.border}`, background: "rgba(20,40,110,.35)", color: "#7090b8", fontSize: 11, cursor: "pointer" }}>
+          <button onClick={() => { setAdminReturnScreen("home"); setScreen("admin"); }} style={{ marginLeft: "auto", marginRight: 8, padding: "8px 10px", borderRadius: 11, border: `1px solid ${C.border}`, background: "rgba(20,40,110,.35)", color: "#7090b8", fontSize: 11, cursor: "pointer" }}>
             Tiffany
           </button>
           <button
@@ -1006,6 +1012,7 @@ export default function App() {
               <button onClick={() => setScreen("home")} style={{ width: "100%", padding: "14px", borderRadius: 16, border: `1px solid ${C.border}`, background: "transparent", color: C.textSub, cursor: "pointer" }}>
                 Voltar para o início
               </button>
+              {appError && <p role="alert" style={{ color: "#ff9aa8", fontSize: 13, textAlign: "center", margin: 0 }}>{appError}</p>}
             </>
           ) : (
             <>
