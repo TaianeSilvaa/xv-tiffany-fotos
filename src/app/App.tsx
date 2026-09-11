@@ -395,10 +395,19 @@ export default function App() {
     } catch { setAppError("Não foi possível enviar a mensagem."); }
   };
 
-  const copyPixKey = () => {
-    navigator.clipboard.writeText(PIX_KEY).catch(() => {});
-    setPixCopied(true);
-    setTimeout(() => setPixCopied(false), 2500);
+  const pixCode = pixPayload(PIX_KEY, Number(selectedAmount ?? customAmount.replace(",", ".")));
+  const [pixCopyError, setPixCopyError] = useState("");
+  useEffect(() => { setPixCopied(false); setPixCopyError(""); }, [pixCode]);
+  const copyPixCode = async () => {
+    setPixCopied(false);
+    setPixCopyError("");
+    try {
+      await navigator.clipboard.writeText(pixCode);
+      setPixCopied(true);
+      setTimeout(() => setPixCopied(false), 2500);
+    } catch {
+      setPixCopyError("Não foi possível copiar automaticamente. Toque no código abaixo, selecione tudo e copie.");
+    }
   };
 
   const goToTab = (tab: Tab) => {
@@ -1591,7 +1600,7 @@ export default function App() {
 
   // ─── GIFT ──────────────────────────────────────────────────────────────────
   if (screen === "gift") {
-    const qrData = encodeURIComponent(pixPayload(PIX_KEY, Number(selectedAmount ?? customAmount.replace(",", "."))));
+    const qrData = encodeURIComponent(pixCode);
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}&format=png&bgcolor=ffffff&color=000000&margin=14`;
 
     return (
@@ -1752,62 +1761,21 @@ export default function App() {
             )}
           </div>
 
-          {/* PIX Key */}
-          <div
-            style={{
-              borderRadius: 18,
-              padding: "18px 20px",
-              background: C.card,
-              border: `1px solid ${C.borderFaint}`,
-            }}
-          >
-            <p
-              style={{
-                color: C.textMuted,
-                fontSize: 10,
-                letterSpacing: "0.14em",
-                marginBottom: 10,
-              }}
-            >
-              OU COPIE A CHAVE PIX
-            </p>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <p
-                style={{
-                  flex: 1,
-                  color: "#b0c4f0",
-                  fontSize: 14,
-                  fontFamily: "monospace",
-                  wordBreak: "break-all",
-                  lineHeight: 1.5,
-                }}
-              >
-                {PIX_KEY}
-              </p>
-              <button
-                onClick={copyPixKey}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "10px 14px",
-                  borderRadius: 12,
-                  background: pixCopied
-                    ? "rgba(40, 180, 100, 0.18)"
-                    : "rgba(30, 50, 120, 0.6)",
-                  border: `1px solid ${pixCopied ? "rgba(40, 200, 100, 0.4)" : C.border}`,
-                  color: pixCopied ? "#60cc80" : "#8099cc",
-                  fontSize: 13,
-                  fontFamily: "Jost, sans-serif",
-                  cursor: "pointer",
-                  flexShrink: 0,
-                  transition: "all 0.2s",
-                }}
-              >
-                {pixCopied ? <Check size={14} /> : <Copy size={14} />}
-                <span>{pixCopied ? "Copiado!" : "Copiar"}</span>
-              </button>
-            </div>
+          <div style={{ borderRadius: 18, padding: "18px 20px", background: C.card, border: `1px solid ${C.borderFaint}` }}>
+            <p style={{ color: C.textSub, fontSize: 14, marginBottom: 12 }}>PIX COPIA E COLA</p>
+            <textarea
+              aria-label="Código PIX Copia e Cola"
+              value={pixCode}
+              readOnly
+              onFocus={(event) => event.currentTarget.select()}
+              rows={3}
+              style={{ width: "100%", boxSizing: "border-box", resize: "none", borderRadius: 12, padding: 12, background: "#101c50", border: `1px solid ${C.border}`, color: "#b0c4f0", fontSize: 14, fontFamily: "monospace", wordBreak: "break-all", lineHeight: 1.5 }}
+            />
+            <button onClick={copyPixCode} style={{ width: "100%", marginTop: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px", borderRadius: 12, background: pixCopied ? "rgba(40,180,100,.18)" : "#315de8", border: 0, color: pixCopied ? "#60cc80" : "white", fontSize: 16, cursor: "pointer" }}>
+              {pixCopied ? <Check size={18} /> : <Copy size={18} />}
+              <span aria-live="polite">{pixCopied ? "Copiado!" : "Copiar código PIX"}</span>
+            </button>
+            {pixCopyError && <p role="alert" style={{ color: "#ff9aa8", fontSize: 14, marginTop: 10 }}>{pixCopyError}</p>}
           </div>
 
           {/* Instructions */}
@@ -1828,8 +1796,8 @@ export default function App() {
               }}
             >
               💡 <strong style={{ color: "#8099cc" }}>Como contribuir:</strong> Abra o app do
-              seu banco, acesse o PIX, escaneie o QR Code ou cole a chave acima e informe o valor
-              desejado. Confirme e pronto!
+              seu banco, acesse PIX → Copia e Cola e cole o código copiado. Confira o
+              destinatário e o valor antes de confirmar. Se preferir, escaneie o QR Code.
             </p>
           </div>
         </div>
