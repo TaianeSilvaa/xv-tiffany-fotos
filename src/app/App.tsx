@@ -1888,7 +1888,7 @@ export default function App() {
           }}
         >
           {/* Animated background */}
-          <div style={{ position: "absolute", top: 72, bottom: 250, left: 0, right: 0, overflow: "hidden" }}>
+          <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
             <img
               key={slideshowIndex}
               src={ssPhoto.url}
@@ -1896,8 +1896,8 @@ export default function App() {
               style={{
                 width: "100%",
                 height: "100%",
-                objectFit: "contain",
-                animation: "ssIn .3s ease-out",
+                objectFit: "cover",
+                animation: "kenBurns 5.2s ease-out forwards, ssIn .8s ease-out",
                 willChange: "transform",
               }}
             />
@@ -1989,95 +1989,7 @@ export default function App() {
               <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 13 }}>{ssPhoto.time}</p>
             </div>
 
-            {/* Progress dots */}
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 20, overflowX: "auto" }}>
-              {allImages.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setSlideshowIndex(i)}
-                  style={{
-                    flexShrink: 0,
-                    width: i === slideshowIndex % allImages.length ? 26 : 6,
-                    height: 6,
-                    borderRadius: 3,
-                    background:
-                      i === slideshowIndex % allImages.length
-                        ? C.accent
-                        : "rgba(255,255,255,0.22)",
-                    border: "none",
-                    cursor: "pointer",
-                    transition: "all 0.35s ease",
-                    padding: 0,
-                  }}
-                />
-              ))}
-            </div>
 
-            {/* Controls */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <button
-                onClick={() =>
-                  setSlideshowIndex((i) => (i - 1 + allImages.length) % allImages.length)
-                }
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: "50%",
-                  background: "rgba(255,255,255,0.1)",
-                  border: "1px solid rgba(255,255,255,0.18)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                  flexShrink: 0,
-                }}
-              >
-                <ChevronLeft size={22} color="#fff" />
-              </button>
-
-              <button
-                onClick={() => setSlideshowPlaying((p) => !p)}
-                style={{
-                  flex: 1,
-                  padding: "14px 0",
-                  borderRadius: 18,
-                  background: "rgba(59, 108, 248, 0.5)",
-                  border: "1px solid rgba(80, 120, 255, 0.4)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                  cursor: "pointer",
-                }}
-              >
-                {slideshowPlaying ? (
-                  <Pause size={18} color="#fff" />
-                ) : (
-                  <Play size={18} color="#fff" />
-                )}
-                <span style={{ color: "#fff", fontSize: 14, fontFamily: "Jost, sans-serif" }}>
-                  {slideshowPlaying ? "Pausar" : "Reproduzir"}
-                </span>
-              </button>
-
-              <button
-                onClick={() => setSlideshowIndex((i) => (i + 1) % allImages.length)}
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: "50%",
-                  background: "rgba(255,255,255,0.1)",
-                  border: "1px solid rgba(255,255,255,0.18)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                  flexShrink: 0,
-                }}
-              >
-                <ChevronRight size={22} color="#fff" />
-              </button>
-            </div>
           </div>
         </div>
       </div>
