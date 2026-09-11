@@ -3,10 +3,10 @@ import JSZip from "jszip";
 import { ArrowLeft, Camera, Check, Download, Images, LockKeyhole, Trash2 } from "lucide-react";
 import { adminLogin, deletePhoto, type ApiPhoto } from "../lib/api";
 
-interface Props { photos: ApiPhoto[]; onBack: () => void; onDeleted: (id: string) => void; onFeed: () => void; onPublish: () => void }
+interface Props { onLogout: () => void; photos: ApiPhoto[]; onBack: () => void; onDeleted: (id: string) => void; onFeed: () => void; onPublish: () => void }
 interface FlatImage { id: string; url: string; guestName: string }
 
-export default function AdminArea({ photos, onBack, onDeleted, onFeed, onPublish }: Props) {
+export default function AdminArea({ photos, onLogout, onBack, onDeleted, onFeed, onPublish }: Props) {
   const [password, setPassword] = useState("");
   const [token, setToken] = useState(() => sessionStorage.getItem("tiffany-admin-token") || "");
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -48,6 +48,7 @@ export default function AdminArea({ photos, onBack, onDeleted, onFeed, onPublish
   </div></div>;
 
   return <div style={shell}>
+    <button onClick={onLogout} style={{ ...linkButton, float: "right", padding: 10 }}>Sair</button>
     <button onClick={onBack} style={linkButton}><ArrowLeft /></button>
     <h1 style={{ fontFamily: "Cormorant,serif", fontSize: 34, fontWeight: 400, marginBottom: 4 }}>Espaço da Tiffany</h1><p style={{ color: "#7090c0" }}>{images.length} fotos guardadas</p>
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, margin: "20px 0" }}><button onClick={onFeed} style={primaryButton}><Images size={17} /> Ver feed como Tiffany</button><button onClick={onPublish} style={primaryButton}><Camera size={17} /> Publicar fotos</button></div>

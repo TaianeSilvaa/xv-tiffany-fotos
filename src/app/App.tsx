@@ -1,3 +1,4 @@
+import { pixPayload } from "../lib/pix";
 import { useState, useEffect, type CSSProperties } from "react";
 import {
   Camera,
@@ -106,7 +107,7 @@ const DEMO_MESSAGES: Message[] = [
   },
 ];
 
-const PIX_KEY = "tiffany15anos@gmail.com";
+const PIX_KEY = "92e3c8c6-f475-4ab1-9d31-bda3faed550d";
 const PIX_AMOUNTS = [50, 100, 150, 200];
 
 function getTime() {
@@ -295,6 +296,13 @@ export default function App() {
     return created;
   });
   const [photos, setPhotos] = useState<Photo[]>(isApiConfigured ? [] : DEMO_PHOTOS);
+  const allImages = photos.flatMap((post, postIndex) => (post.images?.length ? post.images : [{ id: post.id, url: post.url }]).map((image, imageIndex) => ({ ...post, ...image, postIndex, imageIndex })));
+  const logoutTiffany = () => {
+    sessionStorage.removeItem("tiffany-admin-token");
+    localStorage.removeItem("tiffany-guest-name");
+    localStorage.removeItem("tiffany-guest-key");
+    window.location.reload();
+  };
   const [messages, setMessages] = useState<Message[]>(isApiConfigured ? [] : DEMO_MESSAGES);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
@@ -428,15 +436,15 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (screen !== "slideshow" || !slideshowPlaying || photos.length === 0) return;
+    if (screen !== "slideshow" || !slideshowPlaying || allImages.length === 0) return;
     const id = setTimeout(() => {
-      setSlideshowIndex((i) => (i + 1) % photos.length);
+      setSlideshowIndex((i) => (i + 1) % allImages.length);
     }, 5000);
     return () => clearTimeout(id);
-  }, [screen, slideshowIndex, slideshowPlaying, photos.length]);
+  }, [screen, slideshowIndex, slideshowPlaying, allImages.length]);
 
   if (screen === "admin") {
-    return <AdminArea photos={photos} onBack={() => setScreen(adminReturnScreen)} onDeleted={(id) => setPhotos((current) => current.map((post) => ({ ...post, images: (post.images || [{ id: post.id, url: post.url }]).filter((image) => image.id !== id) })).filter((post) => post.images?.length))} onFeed={() => { setGuestName("Tiffany"); setNameInput("Tiffany"); localStorage.setItem("tiffany-guest-name", "Tiffany"); setScreen("home"); }} onPublish={() => { setGuestName("Tiffany"); localStorage.setItem("tiffany-guest-name", "Tiffany"); openAddPhoto(); }} />;
+    return <AdminArea onLogout={logoutTiffany} photos={photos} onBack={() => setScreen(adminReturnScreen)} onDeleted={(id) => setPhotos((current) => current.map((post) => ({ ...post, images: (post.images || [{ id: post.id, url: post.url }]).filter((image) => image.id !== id) })).filter((post) => post.images?.length))} onFeed={() => { setGuestName("Tiffany"); setNameInput("Tiffany"); localStorage.setItem("tiffany-guest-name", "Tiffany"); setScreen("home"); }} onPublish={() => { setGuestName("Tiffany"); localStorage.setItem("tiffany-guest-name", "Tiffany"); openAddPhoto(); }} />;
   }
 
   // ─── WELCOME ───────────────────────────────────────────────────────────────
@@ -788,6 +796,7 @@ export default function App() {
           <button onClick={() => { setAdminReturnScreen("home"); setScreen("admin"); }} style={{ marginLeft: "auto", marginRight: 8, padding: "8px 10px", borderRadius: 11, border: `1px solid ${C.border}`, background: "rgba(20,40,110,.35)", color: "#7090b8", fontSize: 11, cursor: "pointer" }}>
             Tiffany
           </button>
+          {sessionStorage.getItem("tiffany-admin-token") && <button onClick={logoutTiffany} style={{ background: "none", color: C.textSub, border: 0, cursor: "pointer" }}>Sair</button>}
           <button
             onClick={() => {
               setSlideshowIndex(0);
@@ -867,7 +876,7 @@ export default function App() {
             {photos.length} FOTOS COMPARTILHADAS
           </p>
 
-          {photos.map((photo, index) => <PhotoPost key={photo.id} post={photo} guestName={guestName} guestKey={guestKey} onOpen={() => { setSelectedPhotoIndex(index); setFullImageIndex(0); setScreen("fullPhoto"); }} onChange={(updated) => setPhotos((current) => current.map((item) => item.id === updated.id ? updated : item))} />)}
+          {photos.map((photo, index) => <PhotoPost key={photo.id} post={photo} guestName={guestName} guestKey={guestKey} onOpen={(imageIndex) => { setSelectedPhotoIndex(index); setFullImageIndex(imageIndex); setScreen("fullPhoto"); }} onChange={(updated) => setPhotos((current) => current.map((item) => item.id === updated.id ? updated : item))} />)}
         </div>
 
         <BottomNav activeTab={activeTab} onTabChange={goToTab} onAddPhoto={openAddPhoto} />
@@ -1276,15 +1285,15 @@ export default function App() {
               marginBottom: 14,
             }}
           >
-            {photos.length} FOTOS
+            {allImages.length} FOTOS
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            {photos.map((photo, index) => (
+            {allImages.map((photo, index) => (
               <button
                 key={photo.id}
                 onClick={() => {
-                  setSelectedPhotoIndex(index);
-                  setFullImageIndex(0);
+                  setSelectedPhotoIndex(photo.postIndex);
+                  setFullImageIndex(photo.imageIndex);
                   setScreen("fullPhoto");
                 }}
                 style={{
@@ -1356,7 +1365,7 @@ export default function App() {
           }}
         >
           <button
-            onClick={() => setScreen("gallery")}
+            onClick={() => { setActiveTab("home"); setScreen("home"); }}
             style={{
               position: "absolute",
               top: 48,
@@ -1582,8 +1591,8 @@ export default function App() {
 
   // ─── GIFT ──────────────────────────────────────────────────────────────────
   if (screen === "gift") {
-    const qrData = encodeURIComponent(PIX_KEY);
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}&format=png&bgcolor=0a1035&color=6b9aff&margin=14`;
+    const qrData = encodeURIComponent(pixPayload(PIX_KEY, Number(selectedAmount ?? customAmount.replace(",", "."))));
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}&format=png&bgcolor=ffffff&color=000000&margin=14`;
 
     return (
       <div style={{ ...BASE, paddingBottom: 90 }}>
@@ -1832,7 +1841,7 @@ export default function App() {
 
   // ─── SLIDESHOW ─────────────────────────────────────────────────────────────
   if (screen === "slideshow") {
-    if (photos.length === 0) {
+    if (allImages.length === 0) {
       return (
         <div style={{ ...BASE, background: "#000" }}>
           <div
@@ -1857,7 +1866,7 @@ export default function App() {
       );
     }
 
-    const ssPhoto = photos[slideshowIndex % photos.length];
+    const ssPhoto = allImages[slideshowIndex % allImages.length];
 
     return (
       <div style={{ ...BASE, background: "#000" }}>
@@ -1872,14 +1881,14 @@ export default function App() {
         <div
           style={{
             position: "relative",
-            minHeight: "100dvh",
+            height: "100dvh",
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
           }}
         >
           {/* Animated background */}
-          <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: 72, bottom: 250, left: 0, right: 0, overflow: "hidden" }}>
             <img
               key={slideshowIndex}
               src={ssPhoto.url}
@@ -1887,8 +1896,8 @@ export default function App() {
               style={{
                 width: "100%",
                 height: "100%",
-                objectFit: "cover",
-                animation: slideshowPlaying ? "kenBurns 5.2s ease-out forwards" : "none",
+                objectFit: "contain",
+                animation: "ssIn .3s ease-out",
                 willChange: "transform",
               }}
             />
@@ -1963,6 +1972,8 @@ export default function App() {
                   color: "#fff",
                   marginBottom: 20,
                   lineHeight: 1.45,
+                  overflowWrap: "anywhere",
+                  display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
                   textShadow: "0 2px 16px rgba(0,0,0,0.7)",
                 }}
               >
@@ -1979,17 +1990,18 @@ export default function App() {
             </div>
 
             {/* Progress dots */}
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 20 }}>
-              {photos.map((_, i) => (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 20, overflowX: "auto" }}>
+              {allImages.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setSlideshowIndex(i)}
                   style={{
-                    width: i === slideshowIndex % photos.length ? 26 : 6,
+                    flexShrink: 0,
+                    width: i === slideshowIndex % allImages.length ? 26 : 6,
                     height: 6,
                     borderRadius: 3,
                     background:
-                      i === slideshowIndex % photos.length
+                      i === slideshowIndex % allImages.length
                         ? C.accent
                         : "rgba(255,255,255,0.22)",
                     border: "none",
@@ -2005,7 +2017,7 @@ export default function App() {
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <button
                 onClick={() =>
-                  setSlideshowIndex((i) => (i - 1 + photos.length) % photos.length)
+                  setSlideshowIndex((i) => (i - 1 + allImages.length) % allImages.length)
                 }
                 style={{
                   width: 48,
@@ -2049,7 +2061,7 @@ export default function App() {
               </button>
 
               <button
-                onClick={() => setSlideshowIndex((i) => (i + 1) % photos.length)}
+                onClick={() => setSlideshowIndex((i) => (i + 1) % allImages.length)}
                 style={{
                   width: 48,
                   height: 48,
